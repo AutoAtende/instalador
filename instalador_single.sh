@@ -1,10 +1,5 @@
 #!/bin/bash
 
-GREEN='\033[1;32m'
-BLUE='\033[1;34m'
-WHITE='\033[1;37m'
-RED='\033[1;31m'
-YELLOW='\033[1;33m'
 
 # Variaveis Padrão
 ARCH=$(uname -m)
@@ -19,14 +14,13 @@ jwt_refresh_secret=$(openssl rand -base64 32)
 
 if [ "$EUID" -ne 0 ]; then
   echo
-  printf "${WHITE} >> Este script precisa ser executado como root ${RED}ou com privilégios de superusuário${WHITE}.\n"
+  printf " >> Este script precisa ser executado como root ou com privilégios de superusuário.\n"
   echo
   sleep 2
   exit 1
 fi
 
 banner() {
-  printf " ${BLUE}"
   printf "\n\n"
   printf "██╗███╗   ██╗███████╗████████╗ █████╗ ██╗     ██╗     ███████╗██╗    ██╗██╗\n"
   printf "██║████╗  ██║██╔════╝╚══██╔══╝██╔══██╗██║     ██║     ██╔════╝██║    ██║██║\n"
@@ -40,7 +34,7 @@ banner() {
 
 # Função para manipular erros e encerrar o script
 trata_erro() {
-  printf "${RED}Erro encontrado na etapa $1. Encerrando o script.${WHITE}\n"
+  printf "Erro encontrado na etapa $1. Encerrando o script.\n"
   salvar_etapa "$1"
   exit 1
 }
@@ -70,8 +64,8 @@ carregar_variaveis() {
   if [ -f $ARQUIVO_VARIAVEIS ]; then
     source $ARQUIVO_VARIAVEIS
   else
-    empresa="multiflow"
-    nome_titulo="MultiFlow"
+    empresa="autoatende"
+    nome_titulo="AutoAtende"
   fi
 }
 
@@ -95,7 +89,7 @@ carregar_etapa() {
 # Resetar etapas e variáveis
 resetar_instalacao() {
   rm -f $ARQUIVO_VARIAVEIS $ARQUIVO_ETAPAS
-  printf "${GREEN} >> Instalação resetada! Iniciando uma nova instalação...${WHITE}\n"
+  printf " >> Instalação resetada! Iniciando uma nova instalação...\n"
   sleep 2
   instalacao_base
 }
@@ -104,12 +98,12 @@ resetar_instalacao() {
 verificar_arquivos_existentes() {
   if [ -f $ARQUIVO_VARIAVEIS ] && [ -f $ARQUIVO_ETAPAS ]; then
     banner
-    printf "${YELLOW} >> Dados de instalação anteriores detectados.\n"
+    printf " >> Dados de instalação anteriores detectados.\n"
     echo
     carregar_etapa
     if [ "$etapa" -eq 21 ]; then
-      printf "${WHITE}>> Instalação já concluída.\n"
-      printf "${WHITE}>> Deseja resetar as etapas e começar do zero? (S/N): ${WHITE}\n"
+      printf ">> Instalação já concluída.\n"
+      printf ">> Deseja resetar as etapas e começar do zero? (S/N): \n"
       echo
       read -p "> " reset_escolha
       echo
@@ -117,13 +111,13 @@ verificar_arquivos_existentes() {
       if [ "$reset_escolha" == "S" ]; then
         resetar_instalacao
       else
-        printf "${GREEN} >> Voltando para o menu principal...${WHITE}\n"
+        printf " >> Voltando para o menu principal...\n"
         sleep 2
         menu
       fi
     elif [ "$etapa" -lt 21 ]; then
-      printf "${YELLOW} >> Instalação Incompleta Detectada na etapa $etapa. \n"
-      printf "${WHITE} >> Deseja continuar de onde parou? (S/N): ${WHITE}\n"
+      printf " >> Instalação Incompleta Detectada na etapa $etapa. \n"
+      printf " >> Deseja continuar de onde parou? (S/N): \n"
       echo
       read -p "> " escolha
       echo
@@ -131,8 +125,8 @@ verificar_arquivos_existentes() {
       if [ "$escolha" == "S" ]; then
         instalacao_base
       else
-        printf "${GREEN} >> Voltando ao menu principal...${WHITE}\n"
-        printf "${WHITE} >> Caso deseje resetar as etapas, apague os arquivos ETAPAS_INSTALAÇÃO da pasta root...${WHITE}\n"
+        printf " >> Voltando ao menu principal...\n"
+        printf " >> Caso deseje resetar as etapas, apague os arquivos ETAPAS_INSTALAÇÃO da pasta root...\n"
         sleep 5
         menu
       fi
@@ -146,13 +140,13 @@ verificar_arquivos_existentes() {
 menu() {
   while true; do
     banner
-    printf "${WHITE} Selecione abaixo a opção desejada: \n"
+    printf " Selecione abaixo a opção desejada: \n"
     echo
-    printf "   [${BLUE}1${WHITE}] Instalar ${nome_titulo}\n"
-    printf "   [${BLUE}2${WHITE}] Atualizar ${nome_titulo}\n"
-    printf "   [${BLUE}3${WHITE}] Instalar Transcrição de Audio Nativa\n"
-    printf "   [${BLUE}4${WHITE}] Instalar API Oficial\n"
-    printf "   [${BLUE}0${WHITE}] Sair\n"
+    printf "   [1] Instalar ${nome_titulo}\n"
+    printf "   [2] Atualizar ${nome_titulo}\n"
+    printf "   [3] Instalar Transcrição de Audio Nativa\n"
+    printf "   [4] Instalar API Oficial\n"
+    printf "   [0] Sair\n"
     echo
     read -p "> " option
     case "${option}" in
@@ -172,7 +166,7 @@ menu() {
       sair
       ;;
     *)
-      printf "${RED}Opção inválida. Tente novamente.${WHITE}"
+      printf "Opção inválida. Tente novamente."
       sleep 2
       ;;
     esac
@@ -236,8 +230,6 @@ instalacao_base() {
     if [ "${proxy}" == "nginx" ]; then
       instala_nginx_base || trata_erro "instala_nginx_base"
       salvar_etapa 12
-    elif [ "${proxy}" == "traefik" ]; then
-      instala_traefik_base || trata_erro "instala_traefik_base"
       salvar_etapa 12
     fi
   fi
@@ -263,15 +255,12 @@ instalacao_base() {
     salvar_etapa 17
   fi
   if [ "$etapa" -le "17" ]; then
-    config_cron_base || trata_erro "config_cron_base"
     salvar_etapa 18
   fi
   if [ "$etapa" -le "18" ]; then
     if [ "${proxy}" == "nginx" ]; then
       config_nginx_base || trata_erro "config_nginx_base"
       salvar_etapa 19
-    elif [ "${proxy}" == "traefik" ]; then
-      config_traefik_base || trata_erro "config_traefik_base"
       salvar_etapa 19
     fi
   fi
@@ -287,10 +276,7 @@ instalacao_base() {
 
 # Etapa de instalação
 atualizar_base() {
-  backup_app_atualizar || trata_erro "backup_app_atualizar"
   instala_ffmpeg_base || trata_erro "instala_ffmpeg_base"
-  config_cron_base || trata_erro "config_cron_base"
-  baixa_codigo_atualizar || trata_erro "baixa_codigo_atualizar"
 }
 
 sair() {
@@ -305,13 +291,13 @@ sair() {
 questoes_dns_base() {
   # ARMAZENA URL BACKEND
   banner
-  printf "${WHITE} >> Insira a URL do Backend: \n"
+  printf " >> Insira a URL do Backend: \n"
   echo
   read -p "> " subdominio_backend
   echo
   # ARMAZENA URL FRONTEND
   banner
-  printf "${WHITE} >> Insira a URL do Frontend: \n"
+  printf " >> Insira a URL do Frontend: \n"
   echo
   read -p "> " subdominio_frontend
   echo
@@ -320,7 +306,7 @@ questoes_dns_base() {
 # Valida se o domínio ou subdomínio está apontado para o IP da VPS
 verificar_dns_base() {
   banner
-  printf "${WHITE} >> Verificando o DNS dos dominios/subdominios...\n"
+  printf " >> Verificando o DNS dos dominios/subdominios...\n"
   echo
   sleep 2
   sudo apt-get install dnsutils -y >/dev/null 2>&1
@@ -358,7 +344,7 @@ verificar_dns_base() {
     sleep 2
   fi
   echo
-  printf "${WHITE} >> Continuando...\n"
+  printf " >> Continuando...\n"
   sleep 2
   echo
 }
@@ -366,68 +352,68 @@ verificar_dns_base() {
 questoes_variaveis_base() {
   # DEFINE EMAIL
   banner
-  printf "${WHITE} >> Digite o seu melhor email: \n"
+  printf " >> Digite o seu melhor email: \n"
   echo
   read -p "> " email_deploy
   echo
   # DEFINE NOME DA EMPRESA
   banner
-  printf "${WHITE} >> Digite o nome da sua empresa (Letras minusculas e sem espaço): \n"
+  printf " >> Digite o nome da sua empresa (Letras minusculas e sem espaço): \n"
   echo
   read -p "> " empresa
   echo
   # DEFINE SENHA BASE
   banner
-  printf "${WHITE} >> Insira a senha para o usuario Deploy, Redis e Banco de Dados ${RED}IMPORTANTE${WHITE}: Não utilizar caracteres especiais\n"
+  printf " >> Insira a senha para o usuario Deploy, Redis e Banco de Dados IMPORTANTE: Não utilizar caracteres especiais\n"
   echo
   read -p "> " senha_deploy
   echo
   # ARMAZENA URL BACKEND
   # banner
-  # printf "${WHITE} >> Insira a URL do PerfexCRM: \n"
+  # printf " >> Insira a URL do PerfexCRM: \n"
   # echo
   # read -p "> " subdominio_perfex
   echo
   # DEFINE SENHA MASTER
   banner
-  printf "${WHITE} >> Insira a senha para o MASTER: \n"
+  printf " >> Insira a senha para o MASTER: \n"
   echo
   read -p "> " senha_master
   echo
   # DEFINE TITULO DO APP NO NAVEGADOR
   banner
-  printf "${WHITE} >> Insira o Titulo da Aplicação (Permitido Espaço): \n"
+  printf " >> Insira o Titulo da Aplicação (Permitido Espaço): \n"
   echo
   read -p "> " nome_titulo
   echo
   # DEFINE TELEFONE SUPORTE
   banner
-  printf "${WHITE} >> Digite o numero de telefone para suporte: \n"
+  printf " >> Digite o numero de telefone para suporte: \n"
   echo
   read -p "> " numero_suporte
   echo
   # DEFINE FACEBOOK_APP_ID
   banner
-  printf "${WHITE} >> Digite o FACEBOOK_APP_ID caso tenha: \n"
+  printf " >> Digite o FACEBOOK_APP_ID caso tenha: \n"
   echo
   read -p "> " facebook_app_id
   echo
   # DEFINE FACEBOOK_APP_SECRET
   banner
-  printf "${WHITE} >> Digite o FACEBOOK_APP_SECRET caso tenha: \n"
+  printf " >> Digite o FACEBOOK_APP_SECRET caso tenha: \n"
   echo
   read -p "> " facebook_app_secret
   echo
   # DEFINE TOKEN GITHUB
   banner
-  printf "${WHITE} >> Digite seu TOKEN de acesso pessoal do GitHub: \n"
-  printf "${WHITE} >> Passo a Passo para gerar o seu TOKEN no link ${BLUE}https://bit.ly/token-github ${WHITE} \n"
+  printf " >> Digite seu TOKEN de acesso pessoal do GitHub: \n"
+  printf " >> Passo a Passo para gerar o seu TOKEN no link https://bit.ly/token-github \n"
   echo
   read -p "> " github_token
   echo
   # DEFINE LINK REPO GITHUB
   banner
-  printf "${WHITE} >> Digite a URL do repositório privado no GitHub: \n"
+  printf " >> Digite a URL do repositório privado no GitHub: \n"
   echo
   read -p "> " repo_url
   echo
@@ -435,29 +421,14 @@ questoes_variaveis_base() {
 
 # Define proxy usado
 define_proxy_base() {
-  banner
-  while true; do
-    printf "${WHITE} >> Instalar usando Nginx ou Traefik? (Nginx/Traefik): ${WHITE}\n"
-    echo
-    read -p "> " proxy
-    echo
-    proxy=$(echo "${proxy}" | tr '[:upper:]' '[:lower:]')
-
-    if [ "${proxy}" = "nginx" ] || [ "${proxy}" = "traefik" ]; then
-      sleep 2
-      break
-    else
-      printf "${RED} >> Por favor, digite 'Nginx' ou 'Traefik' para continuar... ${WHITE}\n"
-      echo
-    fi
-  done
+  proxy="nginx"
   export proxy
 }
 
 # Define portas backend e frontend
 define_portas_base() {
   banner
-  printf "${WHITE} >> Usar as portas padrão para Backend (8080) e Frontend (3000) ? (S/N): ${WHITE}\n"
+  printf " >> Usar as portas padrão para Backend (8080) e Frontend (3000) ? (S/N): \n"
   echo
   read -p "> " use_default_ports
   use_default_ports=$(echo "${use_default_ports}" | tr '[:upper:]' '[:lower:]')
@@ -471,27 +442,27 @@ define_portas_base() {
     frontend_port=${default_frontend_port}
   else
     while true; do
-      printf "${WHITE} >> Qual porta deseja para o Backend? ${WHITE}\n"
+      printf " >> Qual porta deseja para o Backend? \n"
       echo
       read -p "> " backend_port
       echo
       if ! lsof -i:${backend_port} &>/dev/null; then
         break
       else
-        printf "${RED} >> A porta ${backend_port} já está em uso. Por favor, escolha outra.${WHITE}\n"
+        printf " >> A porta ${backend_port} já está em uso. Por favor, escolha outra.\n"
         echo
       fi
     done
 
     while true; do
-      printf "${WHITE} >> Qual porta deseja para o Frontend? ${WHITE}\n"
+      printf " >> Qual porta deseja para o Frontend? \n"
       echo
       read -p "> " frontend_port
       echo
       if ! lsof -i:${frontend_port} &>/dev/null; then
         break
       else
-        printf "${RED} >> A porta ${frontend_port} já está em uso. Por favor, escolha outra.${WHITE}\n"
+        printf " >> A porta ${frontend_port} já está em uso. Por favor, escolha outra.\n"
         echo
       fi
     done
@@ -502,23 +473,23 @@ define_portas_base() {
 
 # Informa os dados de instalação
 dados_instalacao_base() {
-  printf "   ${WHITE}Anote os dados abaixo\n\n"
-  printf "   ${WHITE}Subdominio Backend: ---->> ${YELLOW}${subdominio_backend}\n"
-  printf "   ${WHITE}Subdominiio Frontend: -->> ${YELLOW}${subdominio_frontend}\n"
-  printf "   ${WHITE}Seu Email: ------------->> ${YELLOW}${email_deploy}\n"
-  printf "   ${WHITE}Nome da Empresa: ------->> ${YELLOW}${empresa}\n"
-  printf "   ${WHITE}Senha Deploy: ---------->> ${YELLOW}${senha_deploy}\n"
-  # printf "   ${WHITE}Subdominio Perfex: ----->> ${YELLOW}${subdominio_perfex}\n"
-  printf "   ${WHITE}Senha Master: ---------->> ${YELLOW}${senha_master}\n"
-  printf "   ${WHITE}Titulo da Aplicação: --->> ${YELLOW}${nome_titulo}\n"
-  printf "   ${WHITE}Numero de Suporte: ----->> ${YELLOW}${numero_suporte}\n"
-  printf "   ${WHITE}FACEBOOK_APP_ID: ------->> ${YELLOW}${facebook_app_id}\n"
-  printf "   ${WHITE}FACEBOOK_APP_SECRET: --->> ${YELLOW}${facebook_app_secret}\n"
-  printf "   ${WHITE}Token GitHub: ---------->> ${YELLOW}${github_token}\n"
-  printf "   ${WHITE}URL do Repositório: ---->> ${YELLOW}${repo_url}\n"
-  printf "   ${WHITE}Proxy Usado: ----------->> ${YELLOW}${proxy}\n"
-  printf "   ${WHITE}Porta Backend: --------->> ${YELLOW}${backend_port}\n"
-  printf "   ${WHITE}Porta Frontend: -------->> ${YELLOW}${frontend_port}\n"
+  printf "   Anote os dados abaixo\n\n"
+  printf "   Subdominio Backend: ---->> ${subdominio_backend}\n"
+  printf "   Subdominiio Frontend: -->> ${subdominio_frontend}\n"
+  printf "   Seu Email: ------------->> ${email_deploy}\n"
+  printf "   Nome da Empresa: ------->> ${empresa}\n"
+  printf "   Senha Deploy: ---------->> ${senha_deploy}\n"
+  # printf "   Subdominio Perfex: ----->> ${subdominio_perfex}\n"
+  printf "   Senha Master: ---------->> ${senha_master}\n"
+  printf "   Titulo da Aplicação: --->> ${nome_titulo}\n"
+  printf "   Numero de Suporte: ----->> ${numero_suporte}\n"
+  printf "   FACEBOOK_APP_ID: ------->> ${facebook_app_id}\n"
+  printf "   FACEBOOK_APP_SECRET: --->> ${facebook_app_secret}\n"
+  printf "   Token GitHub: ---------->> ${github_token}\n"
+  printf "   URL do Repositório: ---->> ${repo_url}\n"
+  printf "   Proxy Usado: ----------->> ${proxy}\n"
+  printf "   Porta Backend: --------->> ${backend_port}\n"
+  printf "   Porta Frontend: -------->> ${frontend_port}\n"
 }
 
 # Confirma os dados de instalação
@@ -527,16 +498,16 @@ confirma_dados_instalacao_base() {
   echo
   dados_instalacao_base
   echo
-  printf "${WHITE} >> Os dados estão corretos? ${GREEN}S/${RED}N:${WHITE} \n"
+  printf " >> Os dados estão corretos? S/N: \n"
   echo
   read -p "> " confirmacao
   echo
   confirmacao=$(echo "${confirmacao}" | tr '[:lower:]' '[:upper:]')
   if [ "${confirmacao}" == "S" ]; then
-    printf "${GREEN} >> Continuando a Instalação... ${WHITE} \n"
+    printf " >> Continuando a Instalação... \n"
     echo
   else
-    printf "${GREEN} >> Retornando ao Menu Principal... ${WHITE} \n"
+    printf " >> Retornando ao Menu Principal... \n"
     echo
     sleep 2
     menu
@@ -556,7 +527,7 @@ atualiza_vps_base() {
 # Cria usuário deploy
 cria_deploy_base() {
   banner
-  printf "${WHITE} >> Agora, vamos criar o usuário para deploy...\n"
+  printf " >> Agora, vamos criar o usuário para deploy...\n"
   echo
   {
     sudo useradd -m -p $(openssl passwd -1 ${senha_deploy}) -s /bin/bash -G sudo deploy
@@ -568,7 +539,7 @@ cria_deploy_base() {
 # Configura timezone
 config_timezone_base() {
   banner
-  printf "${WHITE} >> Configurando Timezone...\n"
+  printf " >> Configurando Timezone...\n"
   echo
   {
     sudo su - root <<EOF
@@ -581,7 +552,7 @@ EOF
 # Configura firewall
 config_firewall_base() {
   banner
-  printf "${WHITE} >> Configurando o firewall Portas 80 e 443...\n"
+  printf " >> Configurando o firewall Portas 80 e 443...\n"
   echo
   {
     if [ "${ARCH}" = "x86_64" ]; then
@@ -612,7 +583,7 @@ EOF
 # Instala dependência puppeteer
 instala_puppeteer_base() {
   banner
-  printf "${WHITE} >> Instalando puppeteer dependencies...\n"
+  printf " >> Instalando puppeteer dependencies...\n"
   echo
   {
     sudo su - root <<EOF
@@ -646,7 +617,7 @@ EOF
 # Instala FFMPEG
 instala_ffmpeg_base() {
   banner
-  printf "${WHITE} >> Instalando FFMPEG 6...\n"
+  printf " >> Instalando FFMPEG 6...\n"
   echo
 
   if [ -f "${FFMPEG}" ]; then
@@ -664,7 +635,7 @@ instala_ffmpeg_base() {
           FFMPEG_FILE="ffmpeg-n6.1-latest-linux64-gpl-6.1.tar.xz"
           wget -q https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/${FFMPEG_FILE}
           if [ $? -ne 0 ]; then
-            printf "${RED} >> Erro ao baixar o arquivo ${FFMPEG_FILE}. Pressione Enter para continuar...${WHITE} \n"
+            printf " >> Erro ao baixar o arquivo ${FFMPEG_FILE}. Pressione Enter para continuar... \n"
             read
           fi
           mkdir -p ${FFMPEG_DIR}
@@ -682,7 +653,7 @@ instala_ffmpeg_base() {
           FFMPEG_FILE="ffmpeg-n6.1-latest-linuxarm64-gpl-6.1.tar.xz"
           wget -q https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/${FFMPEG_FILE}
           if [ $? -ne 0 ]; then
-            printf "${RED} >> Erro ao baixar o arquivo ${FFMPEG_FILE}. Pressione Enter para continuar...${WHITE} \n"
+            printf " >> Erro ao baixar o arquivo ${FFMPEG_FILE}. Pressione Enter para continuar... \n"
             read
           fi
           mkdir -p ${FFMPEG_DIR}
@@ -711,7 +682,7 @@ instala_ffmpeg_base() {
 # Instala Postgres
 instala_postgres_base() {
   banner
-  printf "${WHITE} >> Instalando postgres...\n"
+  printf " >> Instalando postgres...\n"
   echo
   {
     sudo su - root <<EOF
@@ -727,7 +698,7 @@ EOF
 Instala NodeJS
 instala_node_base() {
   banner
- printf "${WHITE} >> Instalando nodejs...\n"
+ printf " >> Instalando nodejs...\n"
  echo
   {
     sudo su - root <<EOF
@@ -760,7 +731,7 @@ EOF
 # Instala PM2
 instala_pm2_base() {
   banner
-  printf "${WHITE} >> Instalando pm2...\n"
+  printf " >> Instalando pm2...\n"
   echo
   {
     sudo su - root <<EOF
@@ -775,7 +746,7 @@ EOF
 # Instala Nginx e dependências
 instala_nginx_base() {
   banner
-  printf "${WHITE} >> Instalando Nginx...\n"
+  printf " >> Instalando Nginx...\n"
   echo
   {
     sudo su - root <<EOF
@@ -815,150 +786,11 @@ EOF
   } || trata_erro "instala_nginx_base"
 }
 
-# Instala Traefik
-instala_traefik_base() {
-  useradd --system --shell /bin/false --user-group --no-create-home traefik
-  cd /tmp
-  mkdir traefik
-  cd traefik/
-  if [ "${ARCH}" = "x86_64" ]; then
-    traefik_arch="amd64"
-  elif [ "${ARCH}" = "aarch64" ]; then
-    traefik_arch="arm64"
-  else
-    echo "Arquitetura não suportada: ${ARCH}"
-    exit 1
-  fi
-  traefik_url="https://github.com/traefik/traefik/releases/download/v2.10.5/traefik_v2.10.5_linux_${traefik_arch}.tar.gz"
-  curl --remote-name --location "${traefik_url}"
-  tar -zxf traefik_v2.10.5_linux_${traefik_arch}.tar.gz
-  cp traefik /usr/local/bin/traefik
-  chmod a+x /usr/local/bin/traefik
-  cd ..
-  rm -rf traefik
-  mkdir --parents /etc/traefik
-  mkdir --parents /etc/traefik/conf.d
-
-  sleep 2
-
-  sudo su - root <<EOF
-cat > /etc/traefik/traefik.toml << 'END'
-################################################################
-# Global configuration
-################################################################
-[global]
-  checkNewVersion = "false"
-  sendAnonymousUsage = "true"
-
-################################################################
-# Entrypoints configuration
-################################################################
-[entryPoints]
-  [entryPoints.websecure]
-    address = ":443"
-  [entryPoints.web]
-    address = ":80"
-
-################################################################
-# CertificatesResolvers configuration for Let's Encrypt
-################################################################
-[certificatesResolvers.letsencryptresolver.acme]
-  email = "${email_deploy}"
-  storage = "/etc/traefik/acme.json"
-  [certificatesResolvers.letsencryptresolver.acme.httpChallenge]
-    # Define the entrypoint which will receive the HTTP challenge
-    entryPoint = "web"
-
-################################################################
-# Log configuration
-################################################################
-[log]
-  level = "INFO"
-  format = "json"
-  filePath = "/var/log/traefik/traefik.log"
-
-################################################################
-# Access Log configuration
-################################################################
-[accessLog]
-  filePath = "/var/log/traefik/access.log"
-  format = "common"
-
-################################################################
-# API and Dashboard configuration
-################################################################
-[api]
-  dashboard = false
-  insecure = false
-  # [entryPoints.dashboard]
-  #   address = ":9090"
-
-################################################################
-# Providers configuration
-################################################################
-# Since the original setup was intended for Docker and this setup is for systemd,
-# we don't use Docker provider settings but we keep file provider.
-[providers]
-  [providers.file]
-    directory = "/etc/traefik/conf.d/"
-    watch = "true"
-END
-EOF
-
-  sleep 2
-
-  sudo su - root <<EOF
-cat > /etc/traefik/traefik.service << 'END'
-# Systemd Traefik service
-[Unit]
-Description=Traefik - Proxy
-Documentation=https://docs.traefik.io
-After=network-online.target
-Wants=network-online.target systemd-networkd-wait-online.service
-AssertFileIsExecutable=/usr/local/bin/traefik
-AssertPathExists=/etc/traefik/traefik.toml
-#RequiresMountsFor=/var/log
-
-[Service]
-User=traefik
-AmbientCapabilities=CAP_NET_BIND_SERVICE
-Type=notify
-ExecStart=/usr/local/bin/traefik --configFile=/etc/traefik/traefik.toml
-Restart=always
-WatchdogSec=2s
-
-LogsDirectory=traefik
-
-[Install]
-WantedBy=multi-user.target
-END
-EOF
-
-  sleep 2
-
-  sudo su - root <<EOF
-cat > /etc/traefik/conf.d/tls.toml << 'END'
-[tls.options]
-  [tls.options.default]
-    sniStrict = true
-    minVersion = "VersionTLS12"
-END
-EOF
-  sleep 2
-
-  cp /etc/traefik/traefik.service /etc/systemd/system/
-  chown -R traefik:traefik /etc/traefik/
-  rm -rf /etc/traefik/traefik.service
-  systemctl daemon-reload
-  sleep 2
-  systemctl enable --now traefik.service
-  sleep 2
-}
 
 # Cria banco de dados
 cria_banco_base() {
   banner
-  printf "${WHITE} >> Criando Banco Postgres...\n"
+  printf " >> Criando Banco Postgres...\n"
   echo
   {
     sudo su - postgres <<EOF
@@ -977,7 +809,7 @@ EOF
 # Instala Git
 instala_git_base() {
   banner
-  printf "${WHITE} >> Instalando o GIT...\n"
+  printf " >> Instalando o GIT...\n"
   echo
   {
     sudo su - root <<EOF
@@ -1003,11 +835,11 @@ codifica_clone_base() {
 # Clona código de repo privado
 baixa_codigo_base() {
   banner
-  printf "${WHITE} >> Fazendo download do ${nome_titulo}...\n"
+  printf " >> Fazendo download do ${nome_titulo}...\n"
   echo
   {
     if [ -z "${repo_url}" ] || [ -z "${github_token}" ]; then
-      printf "${WHITE} >> Erro: URL do repositório ou token do GitHub não definidos.\n"
+      printf " >> Erro: URL do repositório ou token do GitHub não definidos.\n"
       exit 1
     fi
 
@@ -1019,10 +851,10 @@ baixa_codigo_base() {
     git clone ${github_url} ${dest_dir}
     echo
     if [ $? -eq 0 ]; then
-      printf "${WHITE} >> Código baixado, continuando a instalação...\n"
+      printf " >> Código baixado, continuando a instalação...\n"
       echo
     else
-      printf "${WHITE} >> Falha ao baixar o código! Verifique as informações fornecidas...\n"
+      printf " >> Falha ao baixar o código! Verifique as informações fornecidas...\n"
       echo
       exit 1
     fi
@@ -1037,7 +869,7 @@ baixa_codigo_base() {
 # Instala e configura backend
 instala_backend_base() {
   banner
-  printf "${WHITE} >> Configurando variáveis de ambiente do ${BLUE}backend${WHITE}...\n"
+  printf " >> Configurando variáveis de ambiente do backend...\n"
   echo
   {
     sleep 2
@@ -1135,7 +967,7 @@ EOF
     sleep 2
 
     banner
-    printf "${WHITE} >> Instalando dependências do ${BLUE}backend${WHITE}...\n"
+    printf " >> Instalando dependências do backend...\n"
     echo
     sudo su - deploy <<EOF
   cd /home/deploy/${empresa}/backend
@@ -1161,7 +993,7 @@ EOF
     sleep 2
 
     banner
-    printf "${WHITE} >> Executando db:migrate...\n"
+    printf " >> Executando db:migrate...\n"
     echo
     sudo su - deploy <<EOF
   cd /home/deploy/${empresa}/backend
@@ -1171,7 +1003,7 @@ EOF
     sleep 2
 
     banner
-    printf "${WHITE} >> Executando db:seed...\n"
+    printf " >> Executando db:seed...\n"
     echo
     sudo su - deploy <<EOF
   cd /home/deploy/${empresa}/backend
@@ -1181,7 +1013,7 @@ EOF
     sleep 2
 
     banner
-    printf "${WHITE} >> Iniciando pm2 ${BLUE}backend${WHITE}...\n"
+    printf " >> Iniciando pm2 backend...\n"
     echo
     sudo su - deploy <<EOF
   cd /home/deploy/${empresa}/backend
@@ -1195,7 +1027,7 @@ EOF
 # Instala e configura frontend
 instala_frontend_base() {
   banner
-  printf "${WHITE} >> Instalando dependências do ${BLUE}frontend${WHITE}...\n"
+  printf " >> Instalando dependências do frontend...\n"
   echo
   {
     sudo su - deploy <<EOF
@@ -1207,7 +1039,7 @@ EOF
     sleep 2
 
     banner
-    printf "${WHITE} >> Configurando variáveis de ambiente ${BLUE}frontend${WHITE}...\n"
+    printf " >> Configurando variáveis de ambiente frontend...\n"
     echo
     subdominio_backend=$(echo "${subdominio_backend/https:\/\//}")
     subdominio_backend=${subdominio_backend%%/*}
@@ -1229,7 +1061,7 @@ EOF
     sleep 2
 
     banner
-    printf "${WHITE} >> Compilando o código do ${BLUE}frontend${WHITE}...\n"
+    printf " >> Compilando o código do frontend...\n"
     echo
     sudo su - deploy <<EOF
     cd /home/deploy/${empresa}/frontend
@@ -1240,7 +1072,7 @@ EOF
     sleep 2
 
     banner
-    printf "${WHITE} >> Iniciando pm2 ${BLUE}frontend${WHITE}...\n"
+    printf " >> Iniciando pm2 frontend...\n"
     echo
     sudo su - deploy <<EOF
     cd /home/deploy/${empresa}/frontend
@@ -1252,49 +1084,11 @@ EOF
   } || trata_erro "instala_frontend_base"
 }
 
-# Configura cron de atualização de dados da pasta public
-config_cron_base() {
-  printf "${GREEN} >> Adicionando cron atualizar o uso da public às 3h da manhã...${WHITE} \n"
-  echo
-  {
-    if ! command -v cron >/dev/null 2>&1; then
-      sudo apt-get update
-      sudo apt-get install -y cron
-    fi
-    sleep 2
-    wget -O /home/deploy/atualiza_public.sh https://raw.githubusercontent.com/FilipeCamillo/busca_tamaho_pasta/main/busca_tamaho_pasta.sh >/dev/null 2>&1
-    chmod +x /home/deploy/atualiza_public.sh >/dev/null 2>&1
-    chown deploy:deploy /home/deploy/atualiza_public.sh >/dev/null 2>&1
-    echo '#!/bin/bash
-pm2 restart all' >/home/deploy/reinicia_instancia.sh
-    chmod +x /home/deploy/reinicia_instancia.sh
-    chown deploy:deploy /home/deploy/reinicia_instancia.sh >/dev/null 2>&1
-    sudo su - deploy <<'EOF'
-        CRON_JOB1="0 3 * * * wget -O /home/deploy/atualiza_public.sh https://raw.githubusercontent.com/FilipeCamillo/busca_tamaho_pasta/main/busca_tamaho_pasta.sh && bash /home/deploy/atualiza_public.sh >> /home/deploy/cron.log 2>&1"
-        CRON_JOB2="0 1 * * * /bin/bash /home/deploy/reinicia_instancia.sh >> /home/deploy/cron.log 2>&1"
-        CRON_EXISTS1=$(crontab -l 2>/dev/null | grep -F "${CRON_JOB1}")
-        CRON_EXISTS2=$(crontab -l 2>/dev/null | grep -F "${CRON_JOB2}")
-
-        if [[ -z "${CRON_EXISTS1}" ]] || [[ -z "${CRON_EXISTS2}" ]]; then
-            printf "${GREEN} >> Cron não detectado, agendando agora...${WHITE} "
-            {
-                crontab -l 2>/dev/null
-                [[ -z "${CRON_EXISTS1}" ]] && echo "${CRON_JOB1}"
-                [[ -z "${CRON_EXISTS2}" ]] && echo "${CRON_JOB2}"
-            } | crontab -
-        else
-            printf "${GREEN} >> Crons já existem, continuando...${WHITE} \n"
-        fi
-EOF
-
-    sleep 2
-  } || trata_erro "config_cron_base"
-}
 
 # Configura Nginx
 config_nginx_base() {
   banner
-  printf "${WHITE} >> Configurando nginx ${BLUE}frontend${WHITE}...\n"
+  printf " >> Configurando nginx frontend...\n"
   echo
   {
     frontend_hostname=$(echo "${subdominio_frontend/https:\/\//}")
@@ -1321,7 +1115,7 @@ EOF
     sleep 2
 
     banner
-    printf "${WHITE} >> Configurando Nginx ${BLUE}backend${WHITE}...\n"
+    printf " >> Configurando Nginx backend...\n"
     echo
     backend_hostname=$(echo "${subdominio_backend/https:\/\//}")
     sudo su - root <<EOF
@@ -1352,7 +1146,7 @@ EOF
     sleep 2
 
     banner
-    printf "${WHITE} >> Emitindo SSL do ${subdominio_backend}...\n"
+    printf " >> Emitindo SSL do ${subdominio_backend}...\n"
     echo
     backend_domain=$(echo "${subdominio_backend/https:\/\//}")
     sudo su - root <<EOF
@@ -1366,7 +1160,7 @@ EOF
     sleep 2
 
     banner
-    printf "${WHITE} >> Emitindo SSL do ${subdominio_frontend}...\n"
+    printf " >> Emitindo SSL do ${subdominio_frontend}...\n"
     echo
     frontend_domain=$(echo "${subdominio_frontend/https:\/\//}")
     sudo su - root <<EOF
@@ -1381,80 +1175,11 @@ EOF
   } || trata_erro "config_nginx_base"
 }
 
-# Configura Traefik
-config_traefik_base() {
-  {
-    source /home/deploy/${empresa}/backend/.env
-    subdominio_backend=$(echo ${BACKEND_URL} | sed 's|https://||')
-    subdominio_frontend=$(echo ${FRONTEND_URL} | sed 's|https://||')
-    sudo su - root <<EOF
-cat > /etc/traefik/conf.d/routers-${subdominio_backend}.toml << 'END'
-[http.routers]
-  [http.routers.backend]
-    rule = "Host(\`${subdominio_backend}\`)"
-    service = "backend"
-    entryPoints = ["web"]
-    middlewares = ["https-redirect"]
-
-  [http.routers.backend-secure]
-    rule = "Host(\`${subdominio_backend}\`)"
-    service = "backend"
-    entryPoints = ["websecure"]
-    [http.routers.backend-secure.tls]
-      certResolver = "letsencryptresolver"
-
-[http.services]
-  [http.services.backend]
-    [http.services.backend.loadBalancer]
-      [[http.services.backend.loadBalancer.servers]]
-        url = "http://127.0.0.1:${backend_port}"
-
-[http.middlewares]
-  [http.middlewares.https-redirect.redirectScheme]
-    scheme = "https"
-    permanent = true
-END
-EOF
-
-    sleep 2
-
-    sudo su - root <<EOF
-cat > /etc/traefik/conf.d/routers-${subdominio_frontend}.toml << 'END'
-[http.routers]
-  [http.routers.frontend]
-    rule = "Host(\`${subdominio_frontend}\`)"
-    service = "frontend"
-    entryPoints = ["web"]
-    middlewares = ["https-redirect"]
-
-  [http.routers.frontend-secure]
-    rule = "Host(\`${subdominio_frontend}\`)"
-    service = "frontend"
-    entryPoints = ["websecure"]
-    [http.routers.frontend-secure.tls]
-      certResolver = "letsencryptresolver"
-
-[http.services]
-  [http.services.frontend]
-    [http.services.frontend.loadBalancer]
-      [[http.services.frontend.loadBalancer.servers]]
-        url = "http://127.0.0.1:${frontend_port}"
-
-[http.middlewares]
-  [http.middlewares.https-redirect.redirectScheme]
-    scheme = "https"
-    permanent = true
-END
-EOF
-
-    sleep 2
-  } || trata_erro "config_traefik_base"
-}
 
 # Ajusta latência - necessita reiniciar a VPS para funcionar de fato
 config_latencia_base() {
   banner
-  printf "${WHITE} >> Reduzindo Latência...\n"
+  printf " >> Reduzindo Latência...\n"
   echo
   {
     sudo su - root <<EOF
@@ -1477,15 +1202,15 @@ EOF
 # Finaliza a instalação e mostra dados de acesso
 fim_instalacao_base() {
   banner
-  printf "   ${GREEN} >> Instalação concluída...\n"
+  printf "   >> Instalação concluída...\n"
   echo
-  printf "   ${WHITE}Banckend: ${BLUE}${subdominio_backend}\n"
-  printf "   ${WHITE}Frontend: ${BLUE}${subdominio_frontend}\n"
+  printf "   Banckend: ${subdominio_backend}\n"
+  printf "   Frontend: ${subdominio_frontend}\n"
   echo
-  printf "   ${WHITE}Usuário ${BLUE}admin@multi100.com.br\n"
-  printf "   ${WHITE}Senha   ${BLUE}adminpro\n"
+  printf "   Usuário admin@autoatende.com.br\n"
+  printf "   Senha   adminpro\n"
   echo
-  printf "${WHITE}>> Aperte qualquer tecla para voltar ao menu principal ou CTRL+C Para finalizar esse script\n"
+  printf ">> Aperte qualquer tecla para voltar ao menu principal ou CTRL+C Para finalizar esse script\n"
   read -p ""
   echo
 }
@@ -1494,163 +1219,40 @@ fim_instalacao_base() {
 #                         ATUALIZAÇÃO                          #
 ################################################################
 
-backup_app_atualizar() {
-  carregar_variaveis
-  source /home/deploy/${empresa}/backend/.env
-  {
-    banner
-    printf "${WHITE} >> Antes de atualizar deseja fazer backup do banco de dados? ${GREEN}S/${RED}N:${WHITE}\n"
-    echo
-    read -p "> " confirmacao_backup
-    echo
-    confirmacao_backup=$(echo "${confirmacao_backup}" | tr '[:lower:]' '[:upper:]')
-    if [ "${confirmacao_backup}" == "S" ]; then
-      db_password=$(grep "DB_PASS=" /home/deploy/${empresa}/backend/.env | cut -d '=' -f2)
-      [ ! -d "/home/deploy/backups" ] && mkdir -p "/home/deploy/backups"
-      backup_file="/home/deploy/backups/${empresa}_$(date +%d-%m-%Y_%Hh).sql"
-      PGPASSWORD="${db_password}" pg_dump -U ${empresa} -h localhost ${empresa} >"${backup_file}"
-      printf "${GREEN} >> Backup do banco de dados ${empresa} concluído. Arquivo de backup: ${backup_file}\n"
-      sleep 2
-    else
-      printf " >> Continuando a atualização...\n"
-      echo
-    fi
 
-    sleep 2
-  } || trata_erro "backup_app_atualizar"
-}
 
-baixa_codigo_atualizar() {
-  banner
-  printf "${WHITE} >> Recuperando Permissões... \n"
-  echo
-  sleep 2
-  chown deploy -R /home/deploy/${empresa}
-  chmod 775 -R /home/deploy/${empresa}
-
-  sleep 2
-
-  banner
-  printf "${WHITE} >> Parando Instancias... \n"
-  echo
-  sleep 2
-  sudo su - deploy <<EOF
-  pm2 stop all
-EOF
-
-  sleep 2
-
-  otimiza_banco_atualizar
-
-  banner
-  printf "${WHITE} >> Atualizando a Aplicação... \n"
-  echo
-  sleep 2
-
-  source /home/deploy/${empresa}/frontend/.env
-  frontend_port=${SERVER_PORT:-3000}
-  sudo su - deploy <<EOF
-printf "${WHITE} >> Atualizando Backend...\n"
-echo
-cd /home/deploy/${empresa}
-# git reset --hard
-# git pull
-git fetch origin
-git checkout MULTI100-OFICIAL-u21
-git reset --hard origin/MULTI100-OFICIAL-u21
-cd /home/deploy/${empresa}/backend
-npm prune --force > /dev/null 2>&1
-export PUPPETEER_SKIP_DOWNLOAD=true
-rm -r node_modules
-rm package-lock.json
-npm install --force
-npm install puppeteer-core --force
-npm i glob
-# npm install jimp@^1.6.0
-npm run build
-sleep 2
-printf "${WHITE} >> Atualizando Banco...\n"
-echo
-sleep 2
-npx sequelize db:migrate
-sleep 2
-printf "${WHITE} >> Atualizando Frontend...\n"
-echo
-sleep 2
-cd /home/deploy/${empresa}/frontend
-npm prune --force > /dev/null 2>&1
-npm install --force
-sed -i 's/3000/'"$frontend_port"'/g' server.js
-NODE_OPTIONS="--max-old-space-size=4096 --openssl-legacy-provider" npm run build
-sleep 2
-pm2 flush
-pm2 start all
-EOF
-
-  sudo su - root <<EOF
-    if systemctl is-active --quiet nginx; then
-      sudo systemctl restart nginx
-    elif systemctl is-active --quiet traefik; then
-      sudo systemctl restart traefik.service
-    else
-      printf "${GREEN}Nenhum serviço de proxy (Nginx ou Traefik) está em execução.${WHITE}"
-    fi
-EOF
-
-  echo
-  printf "${WHITE} >> Atualização do ${nome_titulo} concluída...\n"
-  echo
-  sleep 5
-  menu
-}
-
-otimiza_banco_atualizar() {
-  banner
-  printf "${WHITE} >> Realizando Manutenção do Banco de Dados... \n"
-  echo
-  {
-    db_password=$(grep "DB_PASS=" /home/deploy/${empresa}/backend/.env | cut -d '=' -f2)
-    sudo su - root <<EOF
-    PGPASSWORD="$db_password" vacuumdb -U "${empresa}" -h localhost -d "${empresa}" --full --analyze
-    PGPASSWORD="$db_password" psql -U ${empresa} -h 127.0.0.1 -d ${empresa} -c "REINDEX DATABASE ${empresa};"
-    PGPASSWORD="$db_password" psql -U ${empresa} -h 127.0.0.1 -d ${empresa} -c "ANALYZE;"
-EOF
-
-    sleep 2
-  } || trata_erro "otimiza_banco_atualizar"
-}
 
 # Adicionar função para instalar transcrição de áudio nativa
 instalar_transcricao_audio_nativa() {
   banner
-  printf "${WHITE} >> Instalando Transcrição de Áudio Nativa...\n"
+  printf " >> Instalando Transcrição de Áudio Nativa...\n"
   echo
   local script_path="/home/deploy/${empresa}/api_transcricao/install-python-app.sh"
   if [ -f "$script_path" ]; then
     chmod 775 "$script_path"
     bash "$script_path"
   else
-    printf "${RED} >> Script não encontrado em: $script_path${WHITE}\n"
+    printf " >> Script não encontrado em: $script_path\n"
     sleep 2
   fi
-  printf "${GREEN} >> Processo de instalação da transcrição finalizado. Voltando ao menu...${WHITE}\n"
+  printf " >> Processo de instalação da transcrição finalizado. Voltando ao menu...\n"
   sleep 2
 }
 
 # Adicionar função para instalar API Oficial
 instalar_api_oficial() {
   banner
-  printf "${WHITE} >> Instalando API Oficial...\n"
+  printf " >> Instalando API Oficial...\n"
   echo
   local script_path="$(pwd)/instalador_apioficial.sh"
   if [ -f "$script_path" ]; then
     chmod 775 "$script_path"
     bash "$script_path"
   else
-    printf "${RED} >> Script não encontrado em: $script_path${WHITE}\n"
+    printf " >> Script não encontrado em: $script_path\n"
     sleep 2
   fi
-  printf "${GREEN} >> Processo de instalação da API Oficial finalizado. Voltando ao menu...${WHITE}\n"
+  printf " >> Processo de instalação da API Oficial finalizado. Voltando ao menu...\n"
   sleep 2
 }
 

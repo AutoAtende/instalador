@@ -1,10 +1,5 @@
 #!/bin/bash
 
-GREEN='\033[1;32m'
-BLUE='\033[1;34m'
-WHITE='\033[1;37m'
-RED='\033[1;31m'
-YELLOW='\033[1;33m'
 
 # Variaveis Padrão
 ARCH=$(uname -m)
@@ -15,7 +10,7 @@ default_apioficial_port=6000
 
 if [ "$EUID" -ne 0 ]; then
   echo
-  printf "${WHITE} >> Este script precisa ser executado como root ${RED}ou com privilégios de superusuário${WHITE}.\n"
+  printf " >> Este script precisa ser executado como root ou com privilégios de superusuário.\n"
   echo
   sleep 2
   exit 1
@@ -23,20 +18,20 @@ fi
 
 # Função para manipular erros e encerrar o script
 trata_erro() {
-  printf "${RED}Erro encontrado na etapa $1. Encerrando o script.${WHITE}\n"
+  printf "Erro encontrado na etapa $1. Encerrando o script.\n"
   exit 1
 }
 
 # Banner
 banner() {
   clear
-  printf "${BLUE}"
+  printf ""
   echo "╔══════════════════════════════════════════════════════════════╗"
   echo "║                    INSTALADOR API OFICIAL                    ║"
   echo "║                                                              ║"
-  echo "║                    MultiFlow System                          ║"
+  echo "║                    AutoAtende System                         ║"
   echo "╚══════════════════════════════════════════════════════════════╝"
-  printf "${WHITE}"
+  printf ""
   echo
 }
 
@@ -45,26 +40,26 @@ carregar_variaveis() {
   if [ -f $ARQUIVO_VARIAVEIS ]; then
     source $ARQUIVO_VARIAVEIS
   else
-    empresa="multiflow"
-    nome_titulo="MultiFlow"
+    empresa="autoatende"
+    nome_titulo="AutoAtende"
   fi
 }
 
 # Solicitar dados do subdomínio da API Oficial
 solicitar_dados_apioficial() {
   banner
-  printf "${WHITE} >> Insira o subdomínio da API Oficial: \n"
+  printf " >> Insira o subdomínio da API Oficial: \n"
   echo
   read -p "> " subdominio_oficial
   echo
-  printf "   ${WHITE}Subdominio API Oficial: ---->> ${YELLOW}${subdominio_oficial}\n"
+  printf "   Subdominio API Oficial: ---->> ${subdominio_oficial}\n"
   echo "subdominio_oficial=${subdominio_oficial}" >>$ARQUIVO_VARIAVEIS
 }
 
 # Validação de DNS
 verificar_dns_apioficial() {
   banner
-  printf "${WHITE} >> Verificando o DNS do subdomínio da API Oficial...\n"
+  printf " >> Verificando o DNS do subdomínio da API Oficial...\n"
   echo
   sleep 2
   sudo apt-get install dnsutils -y >/dev/null 2>&1
@@ -84,7 +79,7 @@ verificar_dns_apioficial() {
   if [ "${resolved_ip}" != "${ip_atual}" ]; then
     echo "O domínio ${domain} (resolvido para ${resolved_ip}) não está apontando para o IP público atual (${ip_atual})."
     echo
-    printf "${RED} >> Verifique o apontamento de DNS do subdomínio: ${subdominio_oficial}${WHITE}\n"
+    printf " >> Verifique o apontamento de DNS do subdomínio: ${subdominio_oficial}\n"
     sleep 5
     exit 1
   else
@@ -92,7 +87,7 @@ verificar_dns_apioficial() {
     sleep 2
   fi
   echo
-  printf "${WHITE} >> Continuando...\n"
+  printf " >> Continuando...\n"
   sleep 2
   echo
 }
@@ -100,7 +95,7 @@ verificar_dns_apioficial() {
 # Configurar Nginx para API Oficial
 configurar_nginx_apioficial() {
   banner
-  printf "${WHITE} >> Configurando Nginx para API Oficial...\n"
+  printf " >> Configurando Nginx para API Oficial...\n"
   echo
   {
     oficial_hostname=$(echo "${subdominio_oficial/https:\/\//}")
@@ -132,7 +127,7 @@ EOF
     sleep 2
 
     banner
-    printf "${WHITE} >> Emitindo SSL do ${subdominio_oficial}...\n"
+    printf " >> Emitindo SSL do ${subdominio_oficial}...\n"
     echo
     oficial_domain=$(echo "${subdominio_oficial/https:\/\//}")
     sudo su - root <<EOF
@@ -150,14 +145,14 @@ EOF
 # Criar banco de dados para API Oficial
 criar_banco_apioficial() {
   banner
-  printf "${WHITE} >> Criando banco de dados para API Oficial...\n"
+  printf " >> Criando banco de dados para API Oficial...\n"
   echo
   {
     sudo -u postgres psql <<EOF
 CREATE DATABASE oficialseparado;
 \q
 EOF
-    printf "${GREEN} >> Banco de dados 'oficialseparado' criado com sucesso!${WHITE}\n"
+    printf " >> Banco de dados 'oficialseparado' criado com sucesso!\n"
     sleep 2
   } || trata_erro "criar_banco_apioficial"
 }
@@ -165,7 +160,7 @@ EOF
 # Configurar arquivo .env da API Oficial
 configurar_env_apioficial() {
   banner
-  printf "${WHITE} >> Configurando arquivo .env da API Oficial...\n"
+  printf " >> Configurando arquivo .env da API Oficial...\n"
   echo
   {
     # Carregar variáveis necessárias
@@ -189,17 +184,17 @@ DATABASE_USER=${empresa}
 DATABASE_PASSWORD=${senha_deploy}
 DATABASE_NAME=oficialseparado
 TOKEN_ADMIN=adminpro
-URL_BACKEND_MULT100=https://${subdominio_backend}
+URL_BACKEND_AUTOATENDE=https://${subdominio_backend}
 REDIS_URI=redis://:${senha_deploy}@127.0.0.1:6379
 PORT=${default_apioficial_port}
 NAME_ADMIN=SetupAutomatizado
-EMAIL_ADMIN=admin@multi100.com.br
+EMAIL_ADMIN=admin@autoatende.com.br
 PASSWORD_ADMIN=adminpro
 JWT_REFRESH_SECRET=${jwt_refresh_secret_backend}
 URL_API_OFICIAL=https://${subdominio_oficial}
 EOF
 
-    printf "${GREEN} >> Arquivo .env da API Oficial configurado com sucesso!${WHITE}\n"
+    printf " >> Arquivo .env da API Oficial configurado com sucesso!\n"
     sleep 2
   } || trata_erro "configurar_env_apioficial"
 }
@@ -207,31 +202,31 @@ EOF
 # Instalar e configurar API Oficial
 instalar_apioficial() {
   banner
-  printf "${WHITE} >> Instalando e configurando API Oficial...\n"
+  printf " >> Instalando e configurando API Oficial...\n"
   echo
   {
     sudo su - deploy <<EOF
 cd /home/deploy/${empresa}/api_oficial
 
-printf "${WHITE} >> Instalando dependências...\n"
+printf " >> Instalando dependências...\n"
 npm install
 
-printf "${WHITE} >> Gerando Prisma...\n"
+printf " >> Gerando Prisma...\n"
 npx prisma generate
 
-printf "${WHITE} >> Buildando aplicação...\n"
+printf " >> Buildando aplicação...\n"
 npm run build
 
-printf "${WHITE} >> Executando migrações...\n"
+printf " >> Executando migrações...\n"
 npx prisma migrate dev
 
-printf "${WHITE} >> Gerando cliente Prisma...\n"
+printf " >> Gerando cliente Prisma...\n"
 npx prisma generate client
 
-printf "${WHITE} >> Iniciando aplicação com PM2...\n"
+printf " >> Iniciando aplicação com PM2...\n"
 pm2 start dist/main.js --name=api_oficial
 
-printf "${GREEN} >> API Oficial instalada e configurada com sucesso!${WHITE}\n"
+printf " >> API Oficial instalada e configurada com sucesso!\n"
 sleep 2
 EOF
   } || trata_erro "instalar_apioficial"
@@ -240,13 +235,13 @@ EOF
 # Atualizar .env do backend com URL da API Oficial
 atualizar_env_backend() {
   banner
-  printf "${WHITE} >> Atualizando .env do backend com URL da API Oficial...\n"
+  printf " >> Atualizando .env do backend com URL da API Oficial...\n"
   echo
   {
     # Adicionar URL_API_OFICIAL ao .env do backend
     echo "URL_API_OFICIAL=https://${subdominio_oficial}" >> /home/deploy/${empresa}/backend/.env
     
-    printf "${GREEN} >> .env do backend atualizado com sucesso!${WHITE}\n"
+    printf " >> .env do backend atualizado com sucesso!\n"
     sleep 2
   } || trata_erro "atualizar_env_backend"
 }
@@ -254,20 +249,18 @@ atualizar_env_backend() {
 # Reiniciar serviços
 reiniciar_servicos() {
   banner
-  printf "${WHITE} >> Reiniciando serviços...\n"
+  printf " >> Reiniciando serviços...\n"
   echo
   {
     sudo su - root <<EOF
     if systemctl is-active --quiet nginx; then
       sudo systemctl restart nginx
-    elif systemctl is-active --quiet traefik; then
-      sudo systemctl restart traefik.service
     else
-      printf "${GREEN}Nenhum serviço de proxy (Nginx ou Traefik) está em execução.${WHITE}"
+      printf "Nginx não está em execução."
     fi
 EOF
 
-    printf "${GREEN} >> Serviços reiniciados com sucesso!${WHITE}\n"
+    printf " >> Serviços reiniciados com sucesso!\n"
     sleep 2
   } || trata_erro "reiniciar_servicos"
 }
@@ -285,10 +278,10 @@ main() {
   reiniciar_servicos
   
   banner
-  printf "${GREEN} >> Instalação da API Oficial concluída com sucesso!${WHITE}\n"
+  printf " >> Instalação da API Oficial concluída com sucesso!\n"
   echo
-  printf "${WHITE} >> API Oficial disponível em: ${YELLOW}https://${subdominio_oficial}${WHITE}\n"
-  printf "${WHITE} >> Porta da API Oficial: ${YELLOW}${default_apioficial_port}${WHITE}\n"
+  printf " >> API Oficial disponível em: https://${subdominio_oficial}\n"
+  printf " >> Porta da API Oficial: ${default_apioficial_port}\n"
   echo
   sleep 5
 }
