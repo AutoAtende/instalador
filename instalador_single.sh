@@ -101,7 +101,7 @@ verificar_arquivos_existentes() {
     printf " >> Dados de instalação anteriores detectados.\n"
     echo
     carregar_etapa
-    if [ "$etapa" -eq 21 ]; then
+    if [ "$etapa" -eq 20 ]; then
       printf ">> Instalação já concluída.\n"
       printf ">> Deseja resetar as etapas e começar do zero? (S/N): \n"
       echo
@@ -115,7 +115,7 @@ verificar_arquivos_existentes() {
         sleep 2
         menu
       fi
-    elif [ "$etapa" -lt 21 ]; then
+    elif [ "$etapa" -lt 20 ]; then
       printf " >> Instalação Incompleta Detectada na etapa $etapa. \n"
       printf " >> Deseja continuar de onde parou? (S/N): \n"
       echo
@@ -203,74 +203,70 @@ instalacao_base() {
     salvar_etapa 5
   fi
   if [ "$etapa" -le "5" ]; then
-    instala_puppeteer_base || trata_erro "instala_puppeteer_base"
+    instala_ffmpeg_base || trata_erro "instala_ffmpeg_base"
     salvar_etapa 6
   fi
   if [ "$etapa" -le "6" ]; then
-    instala_ffmpeg_base || trata_erro "instala_ffmpeg_base"
+    instala_postgres_base || trata_erro "instala_postgres_base"
     salvar_etapa 7
   fi
   if [ "$etapa" -le "7" ]; then
-    instala_postgres_base || trata_erro "instala_postgres_base"
+    instala_node_base || trata_erro "instala_node_base"
     salvar_etapa 8
   fi
   if [ "$etapa" -le "8" ]; then
-    instala_node_base || trata_erro "instala_node_base"
+    instala_redis_base || trata_erro "instala_redis_base"
     salvar_etapa 9
   fi
   if [ "$etapa" -le "9" ]; then
-    instala_redis_base || trata_erro "instala_redis_base"
+    instala_pm2_base || trata_erro "instala_pm2_base"
     salvar_etapa 10
   fi
   if [ "$etapa" -le "10" ]; then
-    instala_pm2_base || trata_erro "instala_pm2_base"
-    salvar_etapa 11
-  fi
-  if [ "$etapa" -le "11" ]; then
     if [ "${proxy}" == "nginx" ]; then
       instala_nginx_base || trata_erro "instala_nginx_base"
-      salvar_etapa 12
-      salvar_etapa 12
+      salvar_etapa 11
+      salvar_etapa 11
     fi
   fi
-  if [ "$etapa" -le "12" ]; then
+  if [ "$etapa" -le "11" ]; then
     cria_banco_base || trata_erro "cria_banco_base"
+    salvar_etapa 12
+  fi
+  if [ "$etapa" -le "12" ]; then
+    instala_git_base || trata_erro "instala_git_base"
     salvar_etapa 13
   fi
   if [ "$etapa" -le "13" ]; then
-    instala_git_base || trata_erro "instala_git_base"
+    codifica_clone_base || trata_erro "codifica_clone_base"
+    baixa_codigo_base || trata_erro "baixa_codigo_base"
     salvar_etapa 14
   fi
   if [ "$etapa" -le "14" ]; then
-    codifica_clone_base || trata_erro "codifica_clone_base"
-    baixa_codigo_base || trata_erro "baixa_codigo_base"
+    instala_backend_base || trata_erro "instala_backend_base"
     salvar_etapa 15
   fi
   if [ "$etapa" -le "15" ]; then
-    instala_backend_base || trata_erro "instala_backend_base"
+    instala_frontend_base || trata_erro "instala_frontend_base"
     salvar_etapa 16
   fi
   if [ "$etapa" -le "16" ]; then
-    instala_frontend_base || trata_erro "instala_frontend_base"
     salvar_etapa 17
   fi
   if [ "$etapa" -le "17" ]; then
-    salvar_etapa 18
-  fi
-  if [ "$etapa" -le "18" ]; then
     if [ "${proxy}" == "nginx" ]; then
       config_nginx_base || trata_erro "config_nginx_base"
-      salvar_etapa 19
-      salvar_etapa 19
+      salvar_etapa 18
+      salvar_etapa 18
     fi
   fi
-  if [ "$etapa" -le "19" ]; then
+  if [ "$etapa" -le "18" ]; then
     config_latencia_base || trata_erro "config_latencia_base"
-    salvar_etapa 20
+    salvar_etapa 19
   fi
-  if [ "$etapa" -le "20" ]; then
+  if [ "$etapa" -le "19" ]; then
     fim_instalacao_base || trata_erro "fim_instalacao_base"
-    salvar_etapa 21
+    salvar_etapa 20
   fi
 }
 
@@ -580,103 +576,15 @@ EOF
   } || trata_erro "config_firewall_base"
 }
 
-# Instala dependência puppeteer
-instala_puppeteer_base() {
-  banner
-  printf " >> Instalando puppeteer dependencies...\n"
-  echo
-  {
-    sudo su - root <<EOF
-apt-get install -y libaom-dev libass-dev libfreetype6-dev libfribidi-dev \
-                   libharfbuzz-dev libgme-dev libgsm1-dev libmp3lame-dev \
-                   libopencore-amrnb-dev libopencore-amrwb-dev libopenmpt-dev \
-                   libopus-dev libfdk-aac-dev librubberband-dev libspeex-dev \
-                   libssh-dev libtheora-dev libvidstab-dev libvo-amrwbenc-dev \
-                   libvorbis-dev libvpx-dev libwebp-dev libx264-dev libx265-dev \
-                   libxvidcore-dev libzmq3-dev libsdl2-dev build-essential \
-                   yasm cmake libtool libc6 libc6-dev unzip wget pkg-config texinfo zlib1g-dev \
-                   libxshmfence-dev libgcc1 libgbm-dev fontconfig locales gconf-service libasound2 \
-                   libatk1.0-0 libcairo2 libcups2 libdbus-1-3 libexpat1 libfontconfig1 libgcc-s1 \
-                   libgconf-2-4 libgdk-pixbuf2.0-0 libglib2.0-0 libgtk-3-0 libnspr4 libpango-1.0-0 \
-                   libpangocairo-1.0-0 libstdc++6 libx11-6 libx11-xcb1 libxcb1 libxcomposite1 \
-                   libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxrandr2 libxrender1 \
-                   libxss1 libxtst6 ca-certificates fonts-liberation libappindicator1 libnss3 \
-                   lsb-release xdg-utils
-
-if grep -q "20.04" /etc/os-release; then
-    apt-get install -y libsrt-dev
-else
-    apt-get install -y libsrt-openssl-dev
-fi
-
-EOF
-    sleep 2
-  } || trata_erro "instala_puppeteer_base"
-}
-
 # Instala FFMPEG
 instala_ffmpeg_base() {
   banner
-  printf " >> Instalando FFMPEG 6...\n"
+  printf " >> Instalando FFMPEG...\n"
   echo
-
-  if [ -f "${FFMPEG}" ]; then
-    printf " >> FFMPEG já foi instalado. Continuando a instalação...\n"
-    echo
-  else
-
+  {
+    sudo apt install ffmpeg -y
     sleep 2
-
-    {
-      sudo apt install ffmpeg -y
-
-      if [ "${ARCH}" = "x86_64" ]; then
-        if [ "${UBUNTU_VERSION}" = "20.04" ] || [ "${UBUNTU_VERSION}" = "22.04" ]; then
-          FFMPEG_FILE="ffmpeg-n6.1-latest-linux64-gpl-6.1.tar.xz"
-          wget -q https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/${FFMPEG_FILE}
-          if [ $? -ne 0 ]; then
-            printf " >> Erro ao baixar o arquivo ${FFMPEG_FILE}. Pressione Enter para continuar... \n"
-            read
-          fi
-          mkdir -p ${FFMPEG_DIR}
-          tar -xvf ${FFMPEG_FILE} -C ${FFMPEG_DIR} >/dev/null 2>&1
-
-          sudo cp ${FFMPEG_DIR}/ffmpeg-n6.1-latest-linux64-gpl-6.1/bin/ffmpeg /usr/bin/ >/dev/null 2>&1
-          sudo cp ${FFMPEG_DIR}/ffmpeg-n6.1-latest-linux64-gpl-6.1/bin/ffprobe /usr/bin/ >/dev/null 2>&1
-          sudo cp ${FFMPEG_DIR}/ffmpeg-n6.1-latest-linux64-gpl-6.1/bin/ffplay /usr/bin/ >/dev/null 2>&1
-
-          rm -rf ${FFMPEG_DIR} >/dev/null 2>&1
-          rm ${FFMPEG_FILE} >/dev/null 2>&1
-        fi
-      elif [ "${ARCH}" = "aarch64" ]; then
-        if [ "${UBUNTU_VERSION}" = "20.04" ] || [ "${UBUNTU_VERSION}" = "22.04" ]; then
-          FFMPEG_FILE="ffmpeg-n6.1-latest-linuxarm64-gpl-6.1.tar.xz"
-          wget -q https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/${FFMPEG_FILE}
-          if [ $? -ne 0 ]; then
-            printf " >> Erro ao baixar o arquivo ${FFMPEG_FILE}. Pressione Enter para continuar... \n"
-            read
-          fi
-          mkdir -p ${FFMPEG_DIR}
-          tar -xvf ${FFMPEG_FILE} -C ${FFMPEG_DIR} >/dev/null 2>&1
-
-          sudo cp ${FFMPEG_DIR}/ffmpeg-n6.1-latest-linuxarm64-gpl-6.1/bin/ffmpeg /usr/bin/ >/dev/null 2>&1
-          sudo cp ${FFMPEG_DIR}/ffmpeg-n6.1-latest-linuxarm64-gpl-6.1/bin/ffprobe /usr/bin/ >/dev/null 2>&1
-          sudo cp ${FFMPEG_DIR}/ffmpeg-n6.1-latest-linuxarm64-gpl-6.1/bin/ffplay /usr/bin/ >/dev/null 2>&1
-
-          rm -rf ${FFMPEG_DIR} >/dev/null 2>&1
-          rm ${FFMPEG_FILE} >/dev/null 2>&1
-        fi
-      else
-        echo "Arquitetura não suportada."
-        exit 1
-      fi
-
-      export PATH=/usr/bin:${PATH}
-      echo 'export PATH=/usr/bin:${PATH}' >>~/.bashrc
-      source ~/.bashrc >/dev/null 2>&1
-      touch "${FFMPEG}"
-    } || trata_erro "instala_ffmpeg_base"
-  fi
+  } || trata_erro "instala_ffmpeg_base"
 }
 
 # Instala Postgres
